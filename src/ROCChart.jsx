@@ -366,11 +366,11 @@ const ROCChart = () => {
             <h2>ROC Curve</h2>
             <div style={{
                 display: 'flex',
-                justifyContent: 'center', // Центрирование по горизонтали
-                alignItems: 'center', // Центрирование по вертикали
+                justifyContent: 'center',
+                alignItems: 'center',
                 padding: '10px',
-                width: '100%', // Увеличиваем ширину, чтобы контейнер занимал всю доступную область
-                height: '100vh', // Высота на весь экран для вертикального центрирования
+                width: '100%',
+                height: '100vh',
                 boxSizing: 'border-box',
             }}>
                 <div>
