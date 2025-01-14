@@ -145,6 +145,22 @@ const ROCChart = () => {
     }
 
 
+    const generateAlmostIdealSwitchROCData = (n_samples = 1000) => {
+        const data = [];
+
+        for (let i = 0; i < n_samples; i++) {
+            const y_i = Math.random() < 0.5 ? 0 : 1;
+
+            const p_i = y_i === 0
+                ? Math.random() * 0.6 + 0.4
+                : Math.random() * 0.6;
+
+            data.push([p_i, y_i]);
+        }
+
+        return data;
+    }
+
 
     const [value, setValue] = useState(50);
     const RangeSlider = () => {
@@ -285,6 +301,19 @@ const ROCChart = () => {
             setMatrix(calcConfusionMatrix(dataPoints, value / 100));
         }
 
+        const handleAlmostIdealSwitch = () => {
+            const dp = generateAlmostIdealSwitchROCData(30);
+            const pts = [];
+            for (let i = 0; i < dp.length; i += 1) {
+                pts.push({x : lineStartX + (lineEndX - lineStartX) * dp[i][0], color : dp[i][1] === 0 ? 'red' : 'blue'});
+            }
+            setPoints(pts)
+            setDataPoints(dp)
+            const newRocData = calculateROC(dp);
+            setRocData(newRocData);
+            setMatrix(calcConfusionMatrix(dataPoints, value / 100));
+        }
+
         return (
             <div>
                 <canvas
@@ -308,6 +337,9 @@ const ROCChart = () => {
                 </button>
                 <button onClick={handleAlmostIdeal} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
                     AlmostIdeal
+                </button>
+                <button onClick={handleAlmostIdealSwitch} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
+                    AlmostIdealSwitch
                 </button>
             </div>
         );
