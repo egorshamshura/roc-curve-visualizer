@@ -235,7 +235,7 @@ const ROCChart = () => {
         };
 
         const handleRandom = () => {
-            const randomPoints = sortPointsByX(Array.from({ length: 10 }, () => {
+            const randomPoints = sortPointsByX(Array.from({ length: 30 }, () => {
                 const randomX = Math.random() * (lineEndX - lineStartX) + lineStartX;
                 const randomColor = ['red', 'blue'][Math.floor(Math.random() * 2)];
                 return { x: randomX, color: randomColor };
