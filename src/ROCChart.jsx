@@ -114,12 +114,13 @@ const ROCChart = () => {
 
     const [value, setValue] = useState(50);
     const RangeSlider = () => {
-
+        const [thrs, setThrs] = useState(value);
         const handleChange = (event) => {
-            setValue(event.target.value);
+            setThrs(event.target.value);
         };
 
         const handleMouseUp = () => {
+            setValue(thrs)
             setMatrix(calcConfusionMatrix(dataPoints, value / 100));
         };
 
@@ -130,12 +131,12 @@ const ROCChart = () => {
                     type="range"
                     min="0"
                     max="100"
-                    value={value}
+                    value={thrs}
                     onChange={handleChange}
                     onMouseUp={handleMouseUp}
                     style={{ width: '500px' }}
                 />
-                <p style={{ marginTop: '10px' }}>threshold: {value / 100}</p>
+                <p style={{ marginTop: '10px' }}> threshold: {thrs / 100}</p>
             </div>
         );
     };
@@ -296,7 +297,15 @@ const ROCChart = () => {
     return (
         <div className="chart-container">
             <h2>ROC Curve</h2>
-            <div style={{display: 'flex', justifyContent: 'space-between', padding: '10px', width: '30%'}}>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center', // Центрирование по горизонтали
+                alignItems: 'center', // Центрирование по вертикали
+                padding: '10px',
+                width: '100%', // Увеличиваем ширину, чтобы контейнер занимал всю доступную область
+                height: '100vh', // Высота на весь экран для вертикального центрирования
+                boxSizing: 'border-box',
+            }}>
                 <div>
                     <h2>Metrics</h2>
                     <p>Accuracy: {metrics.accuracy}</p>
