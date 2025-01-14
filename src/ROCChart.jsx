@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart, registerables } from 'chart.js';
-import './ROCChart.css';
+import './ROCChart.css'; // Импортируем CSS файл
 
 Chart.register(...registerables);
 
@@ -54,7 +54,7 @@ const ROCChart = () => {
         tpr = combined.map(item => item.y);
         console.log(fpr.join(' '));
         console.log(tpr.join(' '));
-
+        // Вычисляем AUC
         const aucValue = calculateAUC(fpr, tpr);
         setAuc(aucValue);
         const uniqueFPR = [...new Set(fpr)];
@@ -115,12 +115,13 @@ const ROCChart = () => {
                     type="text"
                     value={inputArray}
                     onChange={(e) => setInputArray(e.target.value)}
-                    placeholder='Введите точки в формате [[p1, y1], [p2, y2], ...]'
+                    placeholder='В формате [[p1, y1], [p2, y2], ...]'
                     required
                 />
                 <button type="submit">Добавить точки</button>
             </form>
-            <button onClick={() => generateRandomPoints(50)}>Сгенерировать случайные точки</button>
+            <button onClick={() => generateRandomPoints(50)}>Сгенерировать случайные 50 точек</button>
+            <button onClick={() => generateRandomPoints(100)}>Сгенерировать случайные 100 точек</button>
             <div className="line-chart">
                 <Line
                     data={{
