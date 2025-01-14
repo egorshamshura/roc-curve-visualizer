@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart, registerables } from 'chart.js';
-import './ROCChart.css'; // Импортируем CSS файл
+import './ROCChart.css';
 
 Chart.register(...registerables);
 
@@ -54,7 +54,7 @@ const ROCChart = () => {
         tpr = combined.map(item => item.y);
         console.log(fpr.join(' '));
         console.log(tpr.join(' '));
-        // Вычисляем AUC
+
         const aucValue = calculateAUC(fpr, tpr);
         setAuc(aucValue);
         const uniqueFPR = [...new Set(fpr)];
