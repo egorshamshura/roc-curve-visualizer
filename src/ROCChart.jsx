@@ -36,8 +36,7 @@ const ROCChart = () => {
 
         fpr.push(1)
         tpr.push(1)
-        console.log(fpr.join(' '));
-        console.log(tpr.join(' '));
+
 
         let combined = fpr.map((x, index) => ({ x, y: tpr[index] }));
 
@@ -51,9 +50,8 @@ const ROCChart = () => {
 
         fpr = combined.map(item => item.x);
         tpr = combined.map(item => item.y);
-        console.log(fpr.join(' '));
-        console.log(tpr.join(' '));
-        // Вычисляем AUC
+
+
         const aucValue = calculateAUC(fpr, tpr);
         setAuc(aucValue);
         const uniqueFPR = [...new Set(fpr)];
@@ -78,11 +76,51 @@ const ROCChart = () => {
         return area;
     };
 
+    const calcConfusionMatrix = (pts, threshold) => {
+        let TP = 0;
+        let FP = 0;
+        let FN = 0;
+        let TN = 0;
+        console.log(pts.length);
+        console.log(pts);
+        for (let i = 0; i < pts.length; i++) {
+            const predicted = pts[i][0] >= threshold ? 1 : 0;
+            const actual = pts[i][1];
+            if (predicted === 1 && actual === 1) {
+                TP++;
+            } else if (predicted === 1 && actual === 0) {
+                FP++;
+            } else if (predicted === 0 && actual === 1) {
+                FN++;
+            } else if (predicted === 0 && actual === 0) {
+                TN++;
+            }
+        }
+        console.log(TP, FP, FN, TN);
+        setMetrics({
+            accuracy : ((TP + TN) / (TP + TN + FP + FN)).toFixed(2),
+            precision : (TP / (TP + FP)).toFixed(2),
+            recall : (TP / (TP + FN)).toFixed(2)
+        });
+        return {TP : TP, FP:  FP, FN: FN, TN : TN };
+    }
+
+    const [metrics, setMetrics] = useState({
+        accuracy: NaN,
+        precision: NaN,
+        recall: NaN,
+    });
+
+
+    const [value, setValue] = useState(50);
     const RangeSlider = () => {
-        const [value, setValue] = useState(50); // Default value
 
         const handleChange = (event) => {
             setValue(event.target.value);
+        };
+
+        const handleMouseUp = () => {
+            setMatrix(calcConfusionMatrix(dataPoints, value / 100));
         };
 
         return (
@@ -94,6 +132,7 @@ const ROCChart = () => {
                     max="100"
                     value={value}
                     onChange={handleChange}
+                    onMouseUp={handleMouseUp}
                     style={{ width: '500px' }}
                 />
                 <p style={{ marginTop: '10px' }}>threshold: {value / 100}</p>
@@ -102,14 +141,15 @@ const ROCChart = () => {
     };
     const [points, setPoints] = useState([]);
     const canvasRef = useRef(null);
-    const [pointColor, setPointColor] = useState('red'); // Initial color for points
-    const lineStartX = 50; // Start X position of the line
+    const [pointColor, setPointColor] = useState('red');
+    const lineStartX = 50;
     const lineEndX = 550;
+
     const CanvasComponent = () => {
-        const lineY = 100; // Y position of the line
+        const lineY = 100;
 
         const drawLine = (ctx) => {
-            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Clear the canvas
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
             ctx.beginPath();
             ctx.moveTo(lineStartX, lineY);
             ctx.lineTo(lineEndX, lineY);
@@ -121,9 +161,9 @@ const ROCChart = () => {
 
         const drawPoints = (ctx) => {
             points.forEach(({ x, color }) => {
-                ctx.fillStyle = color; // Set the point color
+                ctx.fillStyle = color;
                 ctx.beginPath();
-                ctx.arc(x, lineY, 5, 0, Math.PI * 2); // Draw a circle for each point
+                ctx.arc(x, lineY, 5, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.closePath();
             });
@@ -135,27 +175,27 @@ const ROCChart = () => {
 
         const handleClick = (event) => {
             const rect = canvasRef.current.getBoundingClientRect();
-            const x = event.clientX - rect.left; // Get X position relative to canvas
+            const x = event.clientX - rect.left;
             if (x >= lineStartX && x <= lineEndX) {
-                const newPoint = { x, color: pointColor }; // Create a new point with the current color
-                setPoints((prevPoints) => sortPointsByX([...prevPoints, newPoint])); // Add point to the array
+                const newPoint = { x, color: pointColor };
+                setPoints((prevPoints) => sortPointsByX([...prevPoints, newPoint]));
                 const dp = [];
                 for (let i = 0; i < points.length; i += 1) {
-                    dp.push([(points[i].x - lineStartX) / (lineStartX - lineEndX), points[i].color === 'red' ? 0 : 1]);
+                    dp.push([(points[i].x - lineStartX) / (lineEndX - lineStartX), points[i].color === 'red' ? 0 : 1]);
                 }
                 setDataPoints(dp)
                 const newRocData = calculateROC(dp);
                 setRocData(newRocData);
+                setMatrix(calcConfusionMatrix(dataPoints, value / 100));
             }
-            console.log(points)
         };
 
         const handleClear = () => {
-            setPoints([]); // Clear the points array
+            setPoints([]);
+            setMatrix(calcConfusionMatrix(dataPoints, value / 100));
         };
 
         const handleChangeColor = () => {
-            // Toggle between red and blue
             setPointColor((prevColor) => (prevColor === 'red' ? 'blue' : 'red'));
         };
 
@@ -168,11 +208,12 @@ const ROCChart = () => {
             setPoints(randomPoints)
             const dp = [];
             for (let i = 0; i < points.length; i += 1) {
-                dp.push([(randomPoints[i].x - lineStartX) / (lineStartX - lineEndX), randomPoints[i].color === 'red' ? 0 : 1]);
+                dp.push([(randomPoints[i].x - lineStartX) / (lineEndX - lineStartX), randomPoints[i].color === 'red' ? 0 : 1]);
             }
             setDataPoints(dp)
             const newRocData = calculateROC(dp);
-            setRocData(newRocData);  q
+            setRocData(newRocData);
+            setMatrix(calcConfusionMatrix(dataPoints, value / 100));
         };
 
         useEffect(() => {
@@ -204,11 +245,65 @@ const ROCChart = () => {
         );
     };
 
+    const [matrix, setMatrix] = useState({
+        TP: 40,
+        FP: 7,
+        FN: 8,
+        TN: 44,
+    });
+
+    const ConfusionMatrix = () => {
+        return (
+            <div style={{ textAlign: "center" }}>
+                <h2>Confusion matrix</h2>
+                <table className="confusion-matrix">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th colSpan="2">Actually</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th>Positive</th>
+                        <th>Negative</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <th>Predicted Positive</th>
+                        <td className="tp">
+                            TP={matrix.TP}
+                        </td>
+                        <td className="fp">
+                            FP={matrix.FP}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Predicted Negative</th>
+                        <td className="fn">
+                            FN={matrix.FN}
+                        </td>
+                        <td className="tn">
+                            TN={matrix.TN}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
 
     return (
         <div className="chart-container">
             <h2>ROC Curve</h2>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', width: '30%' }}>
+            <div style={{display: 'flex', justifyContent: 'space-between', padding: '10px', width: '30%'}}>
+                <div>
+                    <h2>Metrics</h2>
+                    <p>Accuracy: {metrics.accuracy}</p>
+                    <p>Precision: {isNaN(metrics.precision) ? 'NaN' : metrics.precision}</p>
+                    <p>Recall: {metrics.recall}</p>
+                </div>
+                <ConfusionMatrix/>
                 <RangeSlider/>
                 <CanvasComponent/>
             </div>
