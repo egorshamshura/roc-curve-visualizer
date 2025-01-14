@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import {useEffect, useRef, useState} from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart, registerables } from 'chart.js';
-import './ROCChart.css'; // Импортируем CSS файл
+import './ROCChart.css';
 
 Chart.register(...registerables);
 
@@ -9,7 +9,6 @@ const ROCChart = () => {
     const [dataPoints, setDataPoints] = useState([]);
     const [rocData, setRocData] = useState({ labels: [], datasets: [] });
     const [auc, setAuc] = useState(0);
-    const [inputArray, setInputArray] = useState('');
 
     const calculateROC = (points) => {
         const sortedPoints = points.sort((a, b) => a[0] - b[0]);
@@ -79,49 +78,140 @@ const ROCChart = () => {
         return area;
     };
 
-    const generateRandomPoints = (numPoints = 10) => {
-        const randomPoints = [];
-        for (let i = 0; i < numPoints; i++) {
-            const p = Math.random();
-            const y = Math.random() < 0.5 ? 0 : 1;
-            randomPoints.push([p, y]);
-        }
-        setDataPoints(randomPoints);
-        const newRocData = calculateROC(randomPoints);
-        setRocData(newRocData);
+    const RangeSlider = () => {
+        const [value, setValue] = useState(50); // Default value
+
+        const handleChange = (event) => {
+            setValue(event.target.value);
+        };
+
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '30px' }}>
+                <h3 style={{ marginBottom: '10px' }}>Threshold slider</h3>
+                <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={value}
+                    onChange={handleChange}
+                    style={{ width: '500px' }}
+                />
+                <p style={{ marginTop: '10px' }}>threshold: {value / 100}</p>
+            </div>
+        );
+    };
+    const [points, setPoints] = useState([]);
+    const canvasRef = useRef(null);
+    const [pointColor, setPointColor] = useState('red'); // Initial color for points
+    const lineStartX = 50; // Start X position of the line
+    const lineEndX = 550;
+    const CanvasComponent = () => {
+        const lineY = 100; // Y position of the line
+
+        const drawLine = (ctx) => {
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Clear the canvas
+            ctx.beginPath();
+            ctx.moveTo(lineStartX, lineY);
+            ctx.lineTo(lineEndX, lineY);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.closePath();
+        };
+
+        const drawPoints = (ctx) => {
+            points.forEach(({ x, color }) => {
+                ctx.fillStyle = color; // Set the point color
+                ctx.beginPath();
+                ctx.arc(x, lineY, 5, 0, Math.PI * 2); // Draw a circle for each point
+                ctx.fill();
+                ctx.closePath();
+            });
+        };
+
+        const sortPointsByX = (points) => {
+            return points.sort((a, b) => a.x - b.x);
+        };
+
+        const handleClick = (event) => {
+            const rect = canvasRef.current.getBoundingClientRect();
+            const x = event.clientX - rect.left; // Get X position relative to canvas
+            if (x >= lineStartX && x <= lineEndX) {
+                const newPoint = { x, color: pointColor }; // Create a new point with the current color
+                setPoints((prevPoints) => sortPointsByX([...prevPoints, newPoint])); // Add point to the array
+                const dp = [];
+                for (let i = 0; i < points.length; i += 1) {
+                    dp.push([(points[i].x - lineStartX) / (lineStartX - lineEndX), points[i].color === 'red' ? 0 : 1]);
+                }
+                setDataPoints(dp)
+                const newRocData = calculateROC(dp);
+                setRocData(newRocData);
+            }
+            console.log(points)
+        };
+
+        const handleClear = () => {
+            setPoints([]); // Clear the points array
+        };
+
+        const handleChangeColor = () => {
+            // Toggle between red and blue
+            setPointColor((prevColor) => (prevColor === 'red' ? 'blue' : 'red'));
+        };
+
+        const handleRandom = () => {
+            const randomPoints = sortPointsByX(Array.from({ length: 10 }, () => {
+                const randomX = Math.random() * (lineEndX - lineStartX) + lineStartX;
+                const randomColor = ['red', 'blue'][Math.floor(Math.random() * 2)];
+                return { x: randomX, color: randomColor };
+            }));
+            setPoints(randomPoints)
+            const dp = [];
+            for (let i = 0; i < points.length; i += 1) {
+                dp.push([(randomPoints[i].x - lineStartX) / (lineStartX - lineEndX), randomPoints[i].color === 'red' ? 0 : 1]);
+            }
+            setDataPoints(dp)
+            const newRocData = calculateROC(dp);
+            setRocData(newRocData);  q
+        };
+
+        useEffect(() => {
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            drawLine(ctx);
+            drawPoints(ctx);
+        }, [points, pointColor]);
+
+        return (
+            <div>
+                <canvas
+                    ref={canvasRef}
+                    width={600}
+                    height={120}
+                    onClick={handleClick}
+                    style={{ display: 'block', margin: '0 auto' }}
+                />
+                <button onClick={handleClear} style={{ marginTop: '10px', display: 'block', margin: 'auto' }}>
+                    Clear
+                </button>
+                <button onClick={handleChangeColor} style={{ marginTop: '10px', display: 'block', margin: 'auto' }}>
+                    Change Point Color (Current: {pointColor})
+                </button>
+                <button onClick={handleRandom} style={{ marginTop: '10px', display: 'block', margin: 'auto' }}>
+                    Random
+                </button>
+            </div>
+        );
     };
 
-    const handleArrayInput = (e) => {
-        e.preventDefault();
-        try {
-            const points = JSON.parse(inputArray);
-            if (!Array.isArray(points) || !points.every(point => Array.isArray(point) && point.length === 2)) {
-                throw new Error('Неверный формат массива. Используйте [[p1, y1], [p2, y2], ...]');
-            }
-            setDataPoints(points);
-            const newRocData = calculateROC(points);
-            setRocData(newRocData);
-            setInputArray('');
-        } catch (error) {
-            alert(error.message);
-        }
-    };
 
     return (
         <div className="chart-container">
             <h2>ROC Curve</h2>
-            <form onSubmit={handleArrayInput}>
-                <input
-                    type="text"
-                    value={inputArray}
-                    onChange={(e) => setInputArray(e.target.value)}
-                    placeholder='В формате [[p1, y1], [p2, y2], ...]'
-                    required
-                />
-                <button type="submit">Добавить точки</button>
-            </form>
-            <button onClick={() => generateRandomPoints(50)}>Сгенерировать случайные 50 точек</button>
-            <button onClick={() => generateRandomPoints(100)}>Сгенерировать случайные 100 точек</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', width: '30%' }}>
+                <RangeSlider/>
+                <CanvasComponent/>
+            </div>
             <div className="line-chart">
                 <Line
                     data={{
