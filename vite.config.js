@@ -7,5 +7,5 @@ export default defineConfig({
   build: {
     outDir: 'build', // Change this to 'dist' if you want to keep the default
   },
-  base: "/egorshamshura/"
+  base: "/roc-curve-visualizer/"
 })
