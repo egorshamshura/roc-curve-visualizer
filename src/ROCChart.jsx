@@ -112,6 +112,40 @@ const ROCChart = () => {
     });
 
 
+    const generateIdealROCData = (n_samples = 1000) => {
+        const data = [];
+
+        for (let i = 0; i < n_samples; i++) {
+            const y_i = Math.random() < 0.5 ? 0 : 1;
+
+            const p_i = y_i === 1
+                ? Math.random() * 0.3 + 0.7
+                : Math.random() * 0.3;
+
+            data.push([p_i, y_i]);
+        }
+
+        return data;
+    }
+
+    const generateAlmostIdealROCData = (n_samples = 1000) => {
+        const data = [];
+
+        for (let i = 0; i < n_samples; i++) {
+            const y_i = Math.random() < 0.5 ? 0 : 1;
+
+            const p_i = y_i === 1
+                ? Math.random() * 0.6 + 0.4
+                : Math.random() * 0.6;
+
+            data.push([p_i, y_i]);
+        }
+
+        return data;
+    }
+
+
+
     const [value, setValue] = useState(50);
     const RangeSlider = () => {
         const [thrs, setThrs] = useState(value);
@@ -224,6 +258,33 @@ const ROCChart = () => {
             drawPoints(ctx);
         }, [points, pointColor]);
 
+        const handleIdeal = () => {
+            const dp = generateIdealROCData(30);
+            const pts = [];
+            for (let i = 0; i < dp.length; i += 1) {
+                pts.push({x : lineStartX + (lineEndX - lineStartX) * dp[i][0], color : dp[i][1] === 0 ? 'red' : 'blue'});
+            }
+            setPoints(pts)
+            setDataPoints(dp)
+            const newRocData = calculateROC(dp);
+            setRocData(newRocData);
+            setMatrix(calcConfusionMatrix(dataPoints, value / 100));
+        }
+
+
+        const handleAlmostIdeal = () => {
+            const dp = generateAlmostIdealROCData(30);
+            const pts = [];
+            for (let i = 0; i < dp.length; i += 1) {
+                pts.push({x : lineStartX + (lineEndX - lineStartX) * dp[i][0], color : dp[i][1] === 0 ? 'red' : 'blue'});
+            }
+            setPoints(pts)
+            setDataPoints(dp)
+            const newRocData = calculateROC(dp);
+            setRocData(newRocData);
+            setMatrix(calcConfusionMatrix(dataPoints, value / 100));
+        }
+
         return (
             <div>
                 <canvas
@@ -231,16 +292,22 @@ const ROCChart = () => {
                     width={600}
                     height={120}
                     onClick={handleClick}
-                    style={{ display: 'block', margin: '0 auto' }}
+                    style={{display: 'block', margin: '0 auto'}}
                 />
-                <button onClick={handleClear} style={{ marginTop: '10px', display: 'block', margin: 'auto' }}>
+                <button onClick={handleClear} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
                     Clear
                 </button>
-                <button onClick={handleChangeColor} style={{ marginTop: '10px', display: 'block', margin: 'auto' }}>
+                <button onClick={handleChangeColor} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
                     Change Point Color (Current: {pointColor})
                 </button>
-                <button onClick={handleRandom} style={{ marginTop: '10px', display: 'block', margin: 'auto' }}>
+                <button onClick={handleRandom} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
                     Random
+                </button>
+                <button onClick={handleIdeal} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
+                    Ideal
+                </button>
+                <button onClick={handleAlmostIdeal} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
+                    AlmostIdeal
                 </button>
             </div>
         );
