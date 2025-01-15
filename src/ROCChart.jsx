@@ -9,14 +9,19 @@ const ROCChart = () => {
     const [dataPoints, setDataPoints] = useState([]);
     const [rocData, setRocData] = useState({ labels: [], datasets: [] });
     const [auc, setAuc] = useState(0);
+    const [[h_x, h_y], setXY] = useState([0, 0]);
+
 
     const calculateROC = (points) => {
+        if (points === rocData)
+            return;
         const sortedPoints = points.sort((a, b) => a[0] - b[0]);
         const totalPositive = points.filter(point => point[1] === 1).length;
         const totalNegative = points.length - totalPositive;
         let tpr = [0];
         let fpr = [0];
-
+        let [highlighted_x, highlighted_y] = [0, 0]
+        let diff = 10000
         const thresholds = [...new Set(sortedPoints.map(point => point[0]))];
         thresholds.forEach((threshold) => {
             let truePositiveRate = 0;
@@ -32,6 +37,11 @@ const ROCChart = () => {
 
             tpr.push(truePositiveRate / totalPositive);
             fpr.push(falsePositiveRate / totalNegative);
+            if (Math.abs(value / 100 - threshold) < diff) {
+                highlighted_y = truePositiveRate / totalPositive
+                highlighted_x = falsePositiveRate / totalNegative
+                diff = Math.abs(value / 100 - threshold)
+            }
         });
 
         fpr.push(1)
@@ -54,6 +64,7 @@ const ROCChart = () => {
 
         const aucValue = calculateAUC(fpr, tpr);
         setAuc(aucValue);
+        setXY([highlighted_x, highlighted_y]);
         const uniqueFPR = [...new Set(fpr)];
         return {
             labels: uniqueFPR.map((x) => x),
@@ -81,8 +92,6 @@ const ROCChart = () => {
         let FP = 0;
         let FN = 0;
         let TN = 0;
-        console.log(pts.length);
-        console.log(pts);
         for (let i = 0; i < pts.length; i++) {
             const predicted = pts[i][0] >= threshold ? 1 : 0;
             const actual = pts[i][1];
@@ -96,7 +105,6 @@ const ROCChart = () => {
                 TN++;
             }
         }
-        console.log(TP, FP, FN, TN);
         setMetrics({
             accuracy : ((TP + TN) / (TP + TN + FP + FN)).toFixed(2),
             precision : (TP / (TP + FP)).toFixed(2),
@@ -163,30 +171,77 @@ const ROCChart = () => {
 
 
     const [value, setValue] = useState(50);
+
     const RangeSlider = () => {
         const [thrs, setThrs] = useState(value);
+
         const handleChange = (event) => {
             setThrs(event.target.value);
         };
 
         const handleMouseUp = () => {
-            setValue(thrs)
+            setValue(thrs);
             setMatrix(calcConfusionMatrix(dataPoints, value / 100));
+            const dp = [];
+            for (let i = 0; i < points.length; i += 1) {
+                dp.push([
+                    (points[i].x - lineStartX) / (lineEndX - lineStartX),
+                    points[i].color === 'red' ? 0 : 1,
+                ]);
+            }
+            calculateROC(dp);
         };
 
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '30px' }}>
-                <h3 style={{ marginBottom: '10px' }}>Threshold slider</h3>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    marginTop: '5px',
+                }}
+            >
                 <input
                     type="range"
                     min="0"
                     max="100"
+                    step="1"
                     value={thrs}
+                    style={{
+                        width: '500px',
+                        WebkitAppearance: 'none',
+                        appearance: 'none',
+                        height: '8px',
+                        background: '#ddd',
+                        outline: 'none',
+                        borderRadius: '4px',
+                    }}
                     onChange={handleChange}
                     onMouseUp={handleMouseUp}
-                    style={{ width: '500px' }}
                 />
-                <p style={{ marginTop: '10px' }}> threshold: {thrs / 100}</p>
+                <style>
+                    {`
+                    input[type="range"]::-webkit-slider-thumb {
+                        -webkit-appearance: none;
+                        appearance: none;
+                        width: 4px;
+                        height: 70px;
+                        background: #007bff;
+                        cursor: pointer;
+                        border-radius: 0;
+                        margin-top: -35px;
+                    }
+
+                    input[type="range"]::-moz-range-thumb {
+                        width: 4px;
+                        height: 25px;
+                        background: #007bff;
+                        cursor: pointer;
+                        border: none;
+                    }
+                `}
+                </style>
+                <p style={{ marginTop: '1px' }}>threshold: {thrs / 100}</p>
             </div>
         );
     };
@@ -211,7 +266,7 @@ const ROCChart = () => {
         };
 
         const drawPoints = (ctx) => {
-            points.forEach(({ x, color }) => {
+            points.forEach(({x, color}) => {
                 ctx.fillStyle = color;
                 ctx.beginPath();
                 ctx.arc(x, lineY, 5, 0, Math.PI * 2);
@@ -227,12 +282,13 @@ const ROCChart = () => {
         const handleClick = (event) => {
             const rect = canvasRef.current.getBoundingClientRect();
             const x = event.clientX - rect.left;
+            const newPoint = { x, color: pointColor };
             if (x >= lineStartX && x <= lineEndX) {
-                const newPoint = { x, color: pointColor };
-                setPoints((prevPoints) => sortPointsByX([...prevPoints, newPoint]));
+                const newPoints = [...points, newPoint]
+                setPoints(newPoints);
                 const dp = [];
-                for (let i = 0; i < points.length; i += 1) {
-                    dp.push([(points[i].x - lineStartX) / (lineEndX - lineStartX), points[i].color === 'red' ? 0 : 1]);
+                for (let i = 0; i < newPoints.length; i += 1) {
+                    dp.push([(newPoints[i].x - lineStartX) / (lineEndX - lineStartX), newPoints[i].color === 'red' ? 0 : 1]);
                 }
                 setDataPoints(dp)
                 const newRocData = calculateROC(dp);
@@ -243,6 +299,17 @@ const ROCChart = () => {
 
         const handleClear = () => {
             setPoints([]);
+            setRocData({
+                labels: [],
+                datasets: [
+                    {
+                        label: 'ROC Curve',
+                        data: {},
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        fill: false,
+                    },
+                ],
+            })
             setMatrix(calcConfusionMatrix(dataPoints, value / 100));
         };
 
@@ -251,14 +318,14 @@ const ROCChart = () => {
         };
 
         const handleRandom = () => {
-            const randomPoints = sortPointsByX(Array.from({ length: 30 }, () => {
+            let randomPoints = sortPointsByX(Array.from({ length: 30 }, () => {
                 const randomX = Math.random() * (lineEndX - lineStartX) + lineStartX;
                 const randomColor = ['red', 'blue'][Math.floor(Math.random() * 2)];
                 return { x: randomX, color: randomColor };
             }));
             setPoints(randomPoints)
             const dp = [];
-            for (let i = 0; i < points.length; i += 1) {
+            for (let i = 0; i < randomPoints.length; i += 1) {
                 dp.push([(randomPoints[i].x - lineStartX) / (lineEndX - lineStartX), randomPoints[i].color === 'red' ? 0 : 1]);
             }
             setDataPoints(dp)
@@ -272,7 +339,7 @@ const ROCChart = () => {
             const ctx = canvas.getContext('2d');
             drawLine(ctx);
             drawPoints(ctx);
-        }, [points, pointColor]);
+        }, []);
 
         const handleIdeal = () => {
             const dp = generateIdealROCData(30);
@@ -321,8 +388,9 @@ const ROCChart = () => {
                     width={600}
                     height={120}
                     onClick={handleClick}
-                    style={{display: 'block', margin: '0 auto'}}
+                    style={{display: 'block', margin: 'auto'}}
                 />
+                <RangeSlider/>
                 <button onClick={handleClear} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
                     Clear
                 </button>
@@ -410,26 +478,44 @@ const ROCChart = () => {
                     <p>Accuracy: {metrics.accuracy}</p>
                     <p>Precision: {isNaN(metrics.precision) ? 'NaN' : metrics.precision}</p>
                     <p>Recall: {metrics.recall}</p>
+                    <p>AUC: {auc.toFixed(2)} </p>
                 </div>
                 <ConfusionMatrix/>
-                <RangeSlider/>
                 <CanvasComponent/>
             </div>
             <div className="line-chart">
                 <Line
                     data={{
                         labels: rocData.labels,
-                        datasets: rocData.datasets,
+                        datasets: rocData.datasets.concat([{
+                            label: 'Highlighted Point',
+                            data: [{ x: h_x, y: h_y }],
+                            borderColor: 'red',
+                            backgroundColor: 'red',
+                            pointRadius: 10,
+                            showLine: false,
+                        }]),
                     }}
                     options={{
                         scales: {
                             x: {
+                                type: 'linear',
+                                min: 0,
+                                max: 1,
+                                ticks: {
+                                    stepSize: 0.1,
+                                },
                                 title: {
                                     display: true,
                                     text: 'False Positive Rate',
                                 },
                             },
                             y: {
+                                min: 0,
+                                max: 1,
+                                ticks: {
+                                    stepSize: 0.1,
+                                },
                                 title: {
                                     display: true,
                                     text: 'True Positive Rate',
@@ -438,9 +524,6 @@ const ROCChart = () => {
                         },
                     }}
                 />
-            </div>
-            <div className="auc-value">
-                <h3>AUC: {auc.toFixed(2)}</h3> {}
             </div>
         </div>
     );
