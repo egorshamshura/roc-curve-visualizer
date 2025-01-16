@@ -120,6 +120,9 @@ const ROCChart = () => {
             precision : (TP / (TP + FP)).toFixed(2),
             recall : (TP / (TP + FN)).toFixed(2)
         });
+        let tpr_ = TP / (TP + FN);
+        let fpr_ = FP / (FP + TN);
+        setXY([fpr_, tpr_]);
         return {TP : TP, FP:  FP, FN: FN, TN : TN };
     }
 
@@ -184,22 +187,25 @@ const ROCChart = () => {
 
     const RangeSlider = () => {
         const [thrs, setThrs] = useState(value);
+        const tempValueRef = useRef(value);
 
         const handleChange = (event) => {
-            setThrs(event.target.value);
+            tempValueRef.current = event.target.value;
         };
 
-        const handleMouseUp = () => {
-            setValue(thrs);
-            setMatrix(calcConfusionMatrix(dataPoints, thrs / 100));
-            const dp = [];
-            for (let i = 0; i < points.length; i += 1) {
-                dp.push([
-                    (points[i].x - lineStartX) / (lineEndX - lineStartX),
-                    points[i].color === 'red' ? 0 : 1,
-                ]);
-            }
+        const handleInteractionEnd = () => {
+            const finalValue = tempValueRef.current;
+            setThrs(finalValue);
+            setMatrix(calcConfusionMatrix(dataPoints, finalValue / 100));
+
+            const dp = points.map((pt) => [
+                (pt.x - lineStartX) / (lineEndX - lineStartX),
+                pt.color === 'red' ? 0 : 1,
+            ]);
+            setValue(finalValue);
+            setMatrix(calcConfusionMatrix(dataPoints, finalValue / 100));
             calculateROC(dp);
+            setMatrix(calcConfusionMatrix(dataPoints, finalValue / 100));
         };
 
         return (
@@ -216,7 +222,7 @@ const ROCChart = () => {
                     min="0"
                     max="100"
                     step="1"
-                    value={thrs}
+                    defaultValue={value}
                     style={{
                         width: '804px',
                         WebkitAppearance: 'none',
@@ -229,7 +235,8 @@ const ROCChart = () => {
                         zIndex: 2,
                     }}
                     onChange={handleChange}
-                    onMouseUp={handleMouseUp}
+                    onMouseUp={handleInteractionEnd}
+                    onTouchEnd={handleInteractionEnd}
                 />
                 <style>
                     {`
@@ -265,6 +272,7 @@ const ROCChart = () => {
             </div>
         );
     };
+
 
     const [points, setPoints] = useState([]);
     const canvasRef = useRef(null);
@@ -472,7 +480,7 @@ const ROCChart = () => {
                             TP={matrix.TP}
                         </td>
                         <td className="fp">
-                        FP={matrix.FP}
+                            FP={matrix.FP}
                         </td>
                     </tr>
                     <tr>
