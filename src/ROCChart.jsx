@@ -64,7 +64,17 @@ const ROCChart = () => {
 
         const aucValue = calculateAUC(fpr, tpr);
         setAuc(aucValue);
-        setXY([highlighted_x, highlighted_y]);
+        if (value === '0')
+        {
+            setXY([1, 1]);
+        } else if (value === 100)
+        {
+            setXY([0, 0]);
+        } else
+        {
+            console.log(value);
+            setXY([highlighted_x, highlighted_y]);
+        }
         const uniqueFPR = [...new Set(fpr)];
         return {
             labels: uniqueFPR.map((x) => x),
@@ -208,11 +218,11 @@ const ROCChart = () => {
                     step="1"
                     value={thrs}
                     style={{
-                        width: '500px',
+                        width: '804px',
                         WebkitAppearance: 'none',
                         appearance: 'none',
                         height: '8px',
-                        background: 'transparent',
+                        //background: 'transparent',
                         outline: 'none',
                         borderRadius: '4px',
                         position: 'relative',
@@ -260,7 +270,7 @@ const ROCChart = () => {
     const canvasRef = useRef(null);
     const [pointColor, setPointColor] = useState('red');
     const lineStartX = 50;
-    const lineEndX = 550;
+    const lineEndX = 848;
 
     const CanvasComponent = () => {
         const lineY = 100;
@@ -400,7 +410,7 @@ const ROCChart = () => {
                 <div style={{marginRight: '20px'}}>
                     <canvas
                         ref={canvasRef}
-                        width={600}
+                        width={900}
                         height={120}
                         onClick={handleClick}
                         style={{display: 'block'}}
