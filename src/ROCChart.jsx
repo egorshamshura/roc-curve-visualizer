@@ -181,7 +181,7 @@ const ROCChart = () => {
 
         const handleMouseUp = () => {
             setValue(thrs);
-            setMatrix(calcConfusionMatrix(dataPoints, value / 100));
+            setMatrix(calcConfusionMatrix(dataPoints, thrs / 100));
             const dp = [];
             for (let i = 0; i < points.length; i += 1) {
                 dp.push([
@@ -212,39 +212,50 @@ const ROCChart = () => {
                         WebkitAppearance: 'none',
                         appearance: 'none',
                         height: '8px',
-                        background: '#ddd',
+                        background: 'transparent',
                         outline: 'none',
                         borderRadius: '4px',
+                        position: 'relative',
+                        zIndex: 2,
                     }}
                     onChange={handleChange}
                     onMouseUp={handleMouseUp}
                 />
                 <style>
                     {`
-                    input[type="range"]::-webkit-slider-thumb {
-                        -webkit-appearance: none;
-                        appearance: none;
-                        width: 4px;
-                        height: 70px;
-                        background: #007bff;
-                        cursor: pointer;
-                        border-radius: 0;
-                        margin-top: -35px;
-                    }
+                input[type="range"]::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    width: 4px;
+                    height: 40px;
+                    background: #007bff;
+                    cursor: pointer;
+                    border-radius: 0;
+                    margin-top: -55px;
+                }
 
-                    input[type="range"]::-moz-range-thumb {
-                        width: 4px;
-                        height: 25px;
-                        background: #007bff;
-                        cursor: pointer;
-                        border: none;
-                    }
-                `}
+                input[type="range"]::-moz-range-thumb {
+                    width: 4px;
+                    height: 15px;
+                    background: #007bff;
+                    cursor: pointer;
+                    border: none;
+                }
+
+                input[type="range"]::-webkit-slider-runnable-track {
+                    background: transparent; /* Прозрачная дорожка */
+                }
+
+                input[type="range"]::-moz-range-track {
+                    background: transparent; /* Прозрачная дорожка */
+                }
+            `}
                 </style>
                 <p style={{ marginTop: '1px' }}>threshold: {thrs / 100}</p>
             </div>
         );
     };
+
     const [points, setPoints] = useState([]);
     const canvasRef = useRef(null);
     const [pointColor, setPointColor] = useState('red');
@@ -382,34 +393,39 @@ const ROCChart = () => {
         }
 
         return (
-            <div>
-                <canvas
-                    ref={canvasRef}
-                    width={600}
-                    height={120}
-                    onClick={handleClick}
-                    style={{display: 'block', margin: 'auto'}}
-                />
-                <RangeSlider/>
-                <button onClick={handleClear} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
-                    Clear
-                </button>
-                <button onClick={handleChangeColor} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
-                    Change Point Color (Current: {pointColor})
-                </button>
-                <button onClick={handleRandom} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
-                    Random
-                </button>
-                <button onClick={handleIdeal} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
-                    Ideal
-                </button>
-                <button onClick={handleAlmostIdeal} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
-                    AlmostIdeal
-                </button>
-                <button onClick={handleAlmostIdealSwitch} style={{marginTop: '10px', display: 'block', margin: 'auto'}}>
-                    AlmostIdealSwitch
-                </button>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <div style={{marginRight: '20px'}}>
+                    <canvas
+                        ref={canvasRef}
+                        width={600}
+                        height={120}
+                        onClick={handleClick}
+                        style={{display: 'block'}}
+                    />
+                    <RangeSlider/>
+                </div>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+                    <button onClick={handleClear}>
+                        Clear
+                    </button>
+                    <button onClick={handleChangeColor}>
+                        Change Point Color (Current: {pointColor})
+                    </button>
+                    <button onClick={handleRandom}>
+                        Random
+                    </button>
+                    <button onClick={handleIdeal}>
+                        Ideal
+                    </button>
+                    <button onClick={handleAlmostIdeal}>
+                        AlmostIdeal
+                    </button>
+                    <button onClick={handleAlmostIdealSwitch}>
+                        AlmostIdealSwitch
+                    </button>
+                </div>
             </div>
+
         );
     };
 
@@ -422,7 +438,7 @@ const ROCChart = () => {
 
     const ConfusionMatrix = () => {
         return (
-            <div style={{ textAlign: "center" }}>
+            <div style={{textAlign: "center"}}>
                 <h2>Confusion matrix</h2>
                 <table className="confusion-matrix">
                     <thead>
@@ -443,7 +459,7 @@ const ROCChart = () => {
                             TP={matrix.TP}
                         </td>
                         <td className="fp">
-                            FP={matrix.FP}
+                        FP={matrix.FP}
                         </td>
                     </tr>
                     <tr>
