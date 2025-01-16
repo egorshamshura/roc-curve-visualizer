@@ -321,7 +321,10 @@ const ROCChart = () => {
                     },
                 ],
             })
-            setMatrix(calcConfusionMatrix(dataPoints, value / 100));
+            setAuc(NaN);
+            setXY([0, 0])
+            setMetrics({accuracy : NaN, precision: NaN, recall : NaN});
+            setMatrix(calcConfusionMatrix([], value / 100));
         };
 
         const handleChangeColor = () => {
