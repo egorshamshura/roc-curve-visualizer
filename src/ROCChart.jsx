@@ -23,6 +23,7 @@ const ROCChart = () => {
         let [highlighted_x, highlighted_y] = [0, 0]
         let diff = 10000
         const thresholds = [...new Set(sortedPoints.map(point => point[0]))];
+        console.log(value);
         thresholds.forEach((threshold) => {
             let truePositiveRate = 0;
             let falsePositiveRate = 0;
@@ -40,6 +41,7 @@ const ROCChart = () => {
             if (Math.abs(value / 100 - threshold) < diff) {
                 highlighted_y = truePositiveRate / totalPositive
                 highlighted_x = falsePositiveRate / totalNegative
+                console.log(value);
                 diff = Math.abs(value / 100 - threshold)
             }
         });
@@ -75,6 +77,8 @@ const ROCChart = () => {
             console.log(value);
             setXY([highlighted_x, highlighted_y]);
         }
+
+        calcConfusionMatrix(sortedPoints, value / 100)
         const uniqueFPR = [...new Set(fpr)];
         return {
             labels: uniqueFPR.map((x) => x),
@@ -122,6 +126,7 @@ const ROCChart = () => {
         });
         let tpr_ = TP / (TP + FN);
         let fpr_ = FP / (FP + TN);
+        console.log(fpr_, tpr_)
         setXY([fpr_, tpr_]);
         return {TP : TP, FP:  FP, FN: FN, TN : TN };
     }
@@ -363,7 +368,7 @@ const ROCChart = () => {
             setDataPoints(dp)
             const newRocData = calculateROC(dp);
             setRocData(newRocData);
-            setMatrix(calcConfusionMatrix(dataPoints, value / 100));
+            setMatrix(calcConfusionMatrix(dp, value / 100));
         };
 
         useEffect(() => {
