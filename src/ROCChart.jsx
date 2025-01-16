@@ -388,7 +388,7 @@ const ROCChart = () => {
             setDataPoints(dp)
             const newRocData = calculateROC(dp);
             setRocData(newRocData);
-            setMatrix(calcConfusionMatrix(dataPoints, value / 100));
+            setMatrix(calcConfusionMatrix(dp, value / 100));
         }
 
 
@@ -402,7 +402,7 @@ const ROCChart = () => {
             setDataPoints(dp)
             const newRocData = calculateROC(dp);
             setRocData(newRocData);
-            setMatrix(calcConfusionMatrix(dataPoints, value / 100));
+            setMatrix(calcConfusionMatrix(dp, value / 100));
         }
 
         const handleAlmostIdealSwitch = () => {
@@ -415,7 +415,7 @@ const ROCChart = () => {
             setDataPoints(dp)
             const newRocData = calculateROC(dp);
             setRocData(newRocData);
-            setMatrix(calcConfusionMatrix(dataPoints, value / 100));
+            setMatrix(calcConfusionMatrix(dp, value / 100));
         }
 
         return (
