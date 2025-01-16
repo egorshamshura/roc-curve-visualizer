@@ -222,7 +222,7 @@ const ROCChart = () => {
                         WebkitAppearance: 'none',
                         appearance: 'none',
                         height: '8px',
-                        //background: 'transparent',
+                        background: 'transparent',
                         outline: 'none',
                         borderRadius: '4px',
                         position: 'relative',
